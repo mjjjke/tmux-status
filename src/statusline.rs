@@ -57,7 +57,9 @@ pub fn create_right_row(config: &Options, bar_bg: Color) -> Row {
     };
     let fill = Style::new().fg(theme::FG_ON_ACCENT).bg(ACCENT).bold();
     let block_bg = theme::BLOCK_BG;
-    let time = Local::now().format("%H:%M %d-%b-%y").to_string();
+    let now = Local::now();
+    let clock_time = now.format("%H:%M").to_string();
+    let clock_date = now.format(" %d-%b-%y ").to_string();
 
     let mut row = BlockRow::new(bar_bg)
         .right()
@@ -81,7 +83,14 @@ pub fn create_right_row(config: &Options, bar_bg: Color) -> Row {
         .active(session, fill)
         .push(
             Block::new()
-                .span(format!("{} ", time), Style::new().bg(block_bg)),
+                .span(
+                    clock_time,
+                    Style::new().bg(block_bg).fg(theme::CLOCK_TIME_FG),
+                )
+                .span(
+                    clock_date,
+                    Style::new().bg(block_bg).fg(theme::CLOCK_DATE_FG),
+                ),
         )
         .row()
 }

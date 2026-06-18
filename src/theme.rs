@@ -20,5 +20,11 @@ pub const FG_ON_ACCENT: Color = Color::Rgb(0x16, 0x16, 0x1e); // #16161E
 /// Separator / divider glyph color. dotbar `fg`.
 pub const SEPARATOR: Color = Color::Rgb(0x56, 0x5f, 0x89); // #565F89 comment
 
+/// Clock time (HH:MM) foreground: bright, so it stands out. dotbar `fg-current`.
+pub const CLOCK_TIME_FG: Color = Color::Rgb(0xc0, 0xca, 0xf5); // #C0CAF5
+
+/// Clock date (dd-Mon-yy) foreground: muted, recedes vs the time.
+pub const CLOCK_DATE_FG: Color = Color::Rgb(0x56, 0x5f, 0x89); // #565F89
+
 /// Error / unknown path color.
 pub const ERROR: Color = Color::Rgb(0xf7, 0x76, 0x8e); // #F7768E red
