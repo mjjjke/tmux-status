@@ -1,9 +1,7 @@
 mod app;
 mod block;
 mod blockrow;
-mod calendar;
 mod options;
-mod popup;
 mod powerline;
 mod render;
 mod statusline;

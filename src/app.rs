@@ -1,6 +1,5 @@
-use crate::calendar;
 use crate::crash_log;
-use crate::options::{Action, Options};
+use crate::options::Options;
 use crate::statusline;
 
 pub fn run(args: &[String]) -> std::io::Result<std::process::ExitCode> {
@@ -13,9 +12,5 @@ pub fn run(args: &[String]) -> std::io::Result<std::process::ExitCode> {
         }
     };
 
-    match config.action {
-        Action::OpenCalendar => calendar::spawn_popup(&config),
-        Action::Calendar => calendar::run(),
-        _ => statusline::render(&config),
-    }
+    statusline::render(&config)
 }

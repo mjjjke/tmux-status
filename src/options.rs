@@ -9,8 +9,15 @@ pub enum Action {
     Render,
     Click(usize),
     Drag(usize),
-    OpenCalendar,
-    Calendar,
+}
+
+/// Which portion of the bar to render. Splitting left/right lets a native
+/// tmux segment (e.g. the prefix badge) sit in the centre gap.
+#[derive(PartialEq)]
+pub enum Side {
+    Both,
+    Left,
+    Right,
 }
 
 pub struct Options {
@@ -24,6 +31,9 @@ pub struct Options {
     pub has_selection: bool,
     pub selection: Selection,
     pub is_zoomed: bool,
+    pub side: Side,
+    /// Columns reserved (between the split halves) for a native badge.
+    pub badge: usize,
 }
 
 impl Default for Options {
@@ -44,6 +54,8 @@ impl Default for Options {
                 x_end: NO_SELECTION,
             },
             is_zoomed: false,
+            side: Side::Both,
+            badge: 0,
         }
     }
 }
@@ -58,10 +70,6 @@ impl Options {
         let mut parser = OptionParser::args(args);
         while let Some(arg) = parser.parse_arg()? {
             match arg {
-                Flag("open-calendar") => {
-                    options.action = Action::OpenCalendar
-                }
-                Flag("calendar") => options.action = Action::Calendar,
                 Flag("click") => {
                     options.action = Action::Click(parser.parse_value()?)
                 }
@@ -108,6 +116,17 @@ impl Options {
                 Flag("zoomed") => {
                     options.is_zoomed = parser.parse_value::<String>()? == "1"
                 }
+                Flag("side") => {
+                    options.side = match parser
+                        .parse_value::<String>()?
+                        .as_str()
+                    {
+                        "left" => Side::Left,
+                        "right" => Side::Right,
+                        _ => Side::Both,
+                    }
+                }
+                Flag("badge") => options.badge = parser.parse_value()?,
                 _ => parser.unexpected()?,
             }
         }

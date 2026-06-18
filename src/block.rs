@@ -13,7 +13,6 @@ enum End {
 pub struct Block {
     spans: Vec<(String, Style)>,
     on_click: Option<Rc<dyn Fn()>>,
-    tag: Option<&'static str>,
     fill: Option<Style>,
     flex: Option<Place>,
     truncate: bool,
@@ -24,7 +23,6 @@ impl Block {
         Self {
             spans: Vec::new(),
             on_click: None,
-            tag: None,
             fill: None,
             flex: None,
             truncate: false,
@@ -81,11 +79,6 @@ impl Block {
 
     pub fn on_click(mut self, callback: impl Fn() + 'static) -> Self {
         self.on_click = Some(Rc::new(callback));
-        self
-    }
-
-    pub fn tag(mut self, tag: &'static str) -> Self {
-        self.tag = Some(tag);
         self
     }
 
@@ -200,7 +193,6 @@ impl Block {
         Parts {
             spans: self.spans,
             on_click: self.on_click,
-            tag: self.tag,
             flex: self.flex,
         }
     }
@@ -209,7 +201,6 @@ impl Block {
 pub(crate) struct Parts {
     pub spans: Vec<(String, Style)>,
     pub on_click: Option<Rc<dyn Fn()>>,
-    pub tag: Option<&'static str>,
     pub flex: Option<Place>,
 }
 

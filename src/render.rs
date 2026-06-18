@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::rc::Rc;
 
 use chord_macro::chord;
@@ -121,13 +120,6 @@ fn trim_front(right: &mut Row, left_len: usize, width: usize) -> bool {
 
 pub struct Layout {
     pub tabs: Vec<WidgetId<Clickable>>,
-    tagged: HashMap<&'static str, WidgetId<Clickable>>,
-}
-
-impl Layout {
-    pub fn tagged(&self, tag: &str) -> Option<WidgetId<Clickable>> {
-        self.tagged.get(tag).copied()
-    }
 }
 
 pub fn build_root(
@@ -138,7 +130,6 @@ pub fn build_root(
     let mut root = Pane::new().horizontal().style(Style::new().bg(bar_bg));
     let mut layout = Layout {
         tabs: Vec::new(),
-        tagged: HashMap::new(),
     };
     let flexed = left.iter().chain(&right).any(Block::flexed);
 
@@ -163,15 +154,11 @@ fn add_block(
 ) -> Box<Pane> {
     let parts = block.into_parts();
     let leading_bg = parts.spans.first().and_then(|(_, style)| style.get_bg());
-    let tag = parts.tag;
     let flex = parts.flex.map(|place| (place, leading_bg));
     let widget = into_widget(parts.spans, parts.on_click);
     let id = widget.get_id();
     if tab {
         layout.tabs.push(id);
-    }
-    if let Some(tag) = tag {
-        layout.tagged.insert(tag, id);
     }
     root.child(flex_node(widget, flex))
 }

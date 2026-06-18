@@ -5,15 +5,13 @@ use tuie::prelude::*;
 
 use crate::block::Block;
 use crate::blockrow::{BlockRow, Row};
-use crate::options::{Action, Options};
+use crate::options::{Action, Options, Side};
 use crate::powerline::Powerline;
 use crate::render;
 use crate::tabs::Tabs;
 
 const GIT_BRANCH_ICON: &str = "\u{e0a0}";
 const UNKNOWN_PATH_ICON: &str = "???";
-pub const CLOCK_TAG: &str = "clock";
-const POPUP_SESSION: &str = "popup";
 pub use crate::theme::ACCENT;
 use crate::theme;
 const POWERLINE_FILL: Powerline = Powerline::BLOCK;
@@ -30,18 +28,6 @@ fn get_git_branch(pane_path: &str) -> String {
             String::from_utf8_lossy(&output.stdout).trim().to_string()
         })
         .unwrap_or_default()
-}
-
-fn open_popup(flag: &'static str) -> impl Fn() + 'static {
-    move || {
-        if let Ok(exe) = std::env::current_exe() {
-            Command::new(exe)
-                .args(std::env::args().skip(1))
-                .arg(flag)
-                .spawn()
-                .ok();
-        }
-    }
 }
 
 #[derive(Clone, Copy)]
@@ -70,11 +56,7 @@ pub fn create_right_row(config: &Options, bar_bg: Color) -> Row {
         None => config.session_title.clone(),
     };
     let fill = Style::new().fg(theme::FG_ON_ACCENT).bg(ACCENT).bold();
-    let block_bg = if config.is_zoomed {
-        theme::BLOCK_BG_ZOOMED
-    } else {
-        theme::BLOCK_BG
-    };
+    let block_bg = theme::BLOCK_BG;
     let time = Local::now().format("%H:%M %d-%b-%y").to_string();
 
     let mut row = BlockRow::new(bar_bg)
@@ -99,9 +81,7 @@ pub fn create_right_row(config: &Options, bar_bg: Color) -> Row {
         .active(session, fill)
         .push(
             Block::new()
-                .span(format!("{} ", time), Style::new().bg(block_bg))
-                .tag(CLOCK_TAG)
-                .on_click(open_popup("--open-calendar")),
+                .span(format!("{} ", time), Style::new().bg(block_bg)),
         )
         .row()
 }
@@ -121,36 +101,65 @@ fn path_block(pane_path: &str) -> Block {
     }
 }
 
-pub fn render(config: &Options) -> std::io::Result<std::process::ExitCode> {
-    if config.session_title == POPUP_SESSION {
-        return Ok(std::process::ExitCode::SUCCESS);
-    }
+fn empty_row(bar_bg: Color) -> Row {
+    BlockRow::new(bar_bg).row()
+}
 
-    let bar_bg = if config.is_zoomed {
-        theme::BAR_BG_ZOOMED
-    } else {
-        theme::BAR_BG
-    };
+pub fn render(config: &Options) -> std::io::Result<std::process::ExitCode> {
+    let bar_bg = theme::BAR_BG;
     let width = config.client_size.x;
     let tabs = Tabs::new(config.window_idx, &config.windows)
         .active_style(Style::new().fg(theme::FG_ON_ACCENT).bg(ACCENT).bold())
         .families(&POWERLINE_FILL, &POWERLINE_DIVIDER)
         .enclose(ENCLOSE_ACTIVE)
         .separator(Style::new().fg(theme::SEPARATOR))
-        .bar_bg(bar_bg);
+        .bar_bg(bar_bg)
+        .zoomed(config.is_zoomed);
 
-    match config.action {
-        Action::Drag(mouse_x) => tabs.drag(bar_bg, width, mouse_x),
-        Action::Click(mouse_x) => render::click(
-            tabs.row(),
-            create_right_row(config, bar_bg),
-            width,
-            mouse_x,
-        ),
-        _ => print!(
+    // Width of the left half when splitting around a centred badge.
+    let left_w = width.saturating_sub(config.badge) / 2;
+    let right_w = width.saturating_sub(config.badge).saturating_sub(left_w);
+
+    match config.side {
+        // Right half only: just the info row, right-aligned in its width.
+        Side::Right => print!(
             "{}",
-            render::emit(tabs.row(), create_right_row(config, bar_bg), width)
+            render::emit(
+                empty_row(bar_bg),
+                create_right_row(config, bar_bg),
+                right_w
+            )
         ),
+        // Left half (tabs) only. Clicks/drags hit-test against this width;
+        // tabs start at column 0 so the full-client mouse_x maps directly.
+        Side::Left => match config.action {
+            Action::Drag(mouse_x) => tabs.drag(bar_bg, left_w, mouse_x),
+            Action::Click(mouse_x) => {
+                render::click(tabs.row(), empty_row(bar_bg), left_w, mouse_x)
+            }
+            _ => print!(
+                "{}",
+                render::emit(tabs.row(), empty_row(bar_bg), left_w)
+            ),
+        },
+        // Whole bar in one piece (default / no badge split).
+        Side::Both => match config.action {
+            Action::Drag(mouse_x) => tabs.drag(bar_bg, width, mouse_x),
+            Action::Click(mouse_x) => render::click(
+                tabs.row(),
+                create_right_row(config, bar_bg),
+                width,
+                mouse_x,
+            ),
+            _ => print!(
+                "{}",
+                render::emit(
+                    tabs.row(),
+                    create_right_row(config, bar_bg),
+                    width
+                )
+            ),
+        },
     }
 
     Ok(std::process::ExitCode::SUCCESS)

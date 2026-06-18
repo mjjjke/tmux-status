@@ -8,6 +8,12 @@ use crate::blockrow::{BlockRow, Row};
 use crate::powerline::Powerline;
 use crate::render::{Clickable, build_root};
 
+/// Glyph shown next to the active window when its pane is zoomed.
+/// U+F065 (nf-fa-expand) is a Nerd Font icon in the BMP private-use area,
+/// same range as the powerline branch glyph, so it renders in the user's
+/// UbuntuMono Nerd Font (verified present in the font's cmap).
+const ZOOM_ICON: &str = "\u{f065}"; // nf-fa-expand (expand / fullscreen)
+
 fn spawn_tmux_command(args: &[&str]) {
     Command::new("tmux").args(args).spawn().ok();
 }
@@ -21,6 +27,7 @@ pub struct Tabs<'a> {
     fill: &'static Powerline,
     divider: &'static Powerline,
     enclose: bool,
+    zoomed: bool,
 }
 
 impl<'a> Tabs<'a> {
@@ -34,7 +41,13 @@ impl<'a> Tabs<'a> {
             fill: &Powerline::BLOCK,
             divider: &Powerline::BLOCK,
             enclose: false,
+            zoomed: false,
         }
+    }
+
+    pub fn zoomed(mut self, zoomed: bool) -> Self {
+        self.zoomed = zoomed;
+        self
     }
 
     pub fn active_style(mut self, style: Style) -> Self {
@@ -74,7 +87,12 @@ impl<'a> Tabs<'a> {
             .separator(self.separator);
         for (idx, name) in self.windows.iter().enumerate() {
             row = if idx == self.active {
-                row.active(name.clone(), self.active_style)
+                let label = if self.zoomed {
+                    format!("{} {}", name, ZOOM_ICON)
+                } else {
+                    name.clone()
+                };
+                row.active(label, self.active_style)
             } else {
                 row.push(Block::new().span(name.clone(), Style::new()).on_click(
                     move || {
