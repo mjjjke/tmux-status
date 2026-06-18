@@ -8,6 +8,7 @@ mod powerline;
 mod render;
 mod statusline;
 mod tabs;
+mod theme;
 mod tmux;
 
 #[cfg(test)]

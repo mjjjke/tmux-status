@@ -14,7 +14,8 @@ const GIT_BRANCH_ICON: &str = "\u{e0a0}";
 const UNKNOWN_PATH_ICON: &str = "???";
 pub const CLOCK_TAG: &str = "clock";
 const POPUP_SESSION: &str = "popup";
-pub const ACCENT: Color = Color::BLUE;
+pub use crate::theme::ACCENT;
+use crate::theme;
 const POWERLINE_FILL: Powerline = Powerline::BLOCK;
 const POWERLINE_DIVIDER: Powerline = Powerline::BLOCK;
 const ENCLOSE_ACTIVE: bool = false;
@@ -68,11 +69,11 @@ pub fn create_right_row(config: &Options, bar_bg: Color) -> Row {
         Some(sel) => sel.label(),
         None => config.session_title.clone(),
     };
-    let fill = Style::new().fg(Color::grey256(0)).bg(ACCENT).bold();
+    let fill = Style::new().fg(theme::FG_ON_ACCENT).bg(ACCENT).bold();
     let block_bg = if config.is_zoomed {
-        Color::grey256(8)
+        theme::BLOCK_BG_ZOOMED
     } else {
-        Color::grey256(5)
+        theme::BLOCK_BG
     };
     let time = Local::now().format("%H:%M %d-%b-%y").to_string();
 
@@ -80,7 +81,7 @@ pub fn create_right_row(config: &Options, bar_bg: Color) -> Row {
         .right()
         .families(&POWERLINE_FILL, &POWERLINE_DIVIDER)
         .enclose(ENCLOSE_ACTIVE)
-        .separator(Style::new().fg(Color::grey256(6)))
+        .separator(Style::new().fg(theme::SEPARATOR))
         .text(config.pane_title.clone(), Style::new())
         .truncate()
         .flex()
@@ -116,7 +117,7 @@ fn path_block(pane_path: &str) -> Block {
     match filename {
         Some(name) => Block::new().span(name.to_string(), Style::new()),
         None => Block::new()
-            .span(UNKNOWN_PATH_ICON.to_string(), Style::new().fg(Color::RED)),
+            .span(UNKNOWN_PATH_ICON.to_string(), Style::new().fg(theme::ERROR)),
     }
 }
 
@@ -126,16 +127,16 @@ pub fn render(config: &Options) -> std::io::Result<std::process::ExitCode> {
     }
 
     let bar_bg = if config.is_zoomed {
-        Color::grey256(5)
+        theme::BAR_BG_ZOOMED
     } else {
-        Color::grey256(2)
+        theme::BAR_BG
     };
     let width = config.client_size.x;
     let tabs = Tabs::new(config.window_idx, &config.windows)
-        .active_style(Style::new().fg(Color::grey256(0)).bg(ACCENT).bold())
+        .active_style(Style::new().fg(theme::FG_ON_ACCENT).bg(ACCENT).bold())
         .families(&POWERLINE_FILL, &POWERLINE_DIVIDER)
         .enclose(ENCLOSE_ACTIVE)
-        .separator(Style::new().fg(Color::grey256(6)))
+        .separator(Style::new().fg(theme::SEPARATOR))
         .bar_bg(bar_bg);
 
     match config.action {

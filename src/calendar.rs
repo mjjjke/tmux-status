@@ -5,6 +5,7 @@ use crate::options::Options;
 use crate::popup;
 use crate::statusline::{ACCENT, CLOCK_TAG, create_right_row};
 use crate::tabs::Tabs;
+use crate::theme;
 
 const WEEKDAYS: &str = "Su Mo Tu We Th Fr Sa";
 const GRID_WIDTH: usize = 20;
@@ -55,7 +56,7 @@ fn week_row(week: &[Option<u32>; 7], today: Option<u32>, color: Color) -> Styled
         if *day == today {
             row = row
                 .span(StyledStr::new("▐").fg(color))
-                .span(StyledStr::new(&cell).fg(Color::grey256(0)).bg(color).bold())
+                .span(StyledStr::new(&cell).fg(theme::FG_ON_ACCENT).bg(color).bold())
                 .span(StyledStr::new("▌").fg(color));
         } else {
             if col > 0 && week[col - 1] != today {
@@ -107,9 +108,9 @@ pub fn spawn_popup(
     config: &Options,
 ) -> std::io::Result<std::process::ExitCode> {
     let bar_bg = if config.is_zoomed {
-        Color::grey256(5)
+        theme::BAR_BG_ZOOMED
     } else {
-        Color::grey256(2)
+        theme::BAR_BG
     };
     let left = Tabs::new(config.window_idx, &config.windows)
         .bar_bg(bar_bg)
