@@ -66,7 +66,7 @@ pub fn create_right_row(config: &Options, bar_bg: Color) -> Row {
         .families(&POWERLINE_FILL, &POWERLINE_DIVIDER)
         .enclose(ENCLOSE_ACTIVE)
         .separator(Style::new().fg(theme::SEPARATOR))
-        .text(config.pane_title.clone(), Style::new())
+        .text(config.pane_title.clone(), Style::new().fg(theme::MUTED_FG))
         .truncate()
         .flex()
         .push(path_block(&config.pane_path));
@@ -75,7 +75,7 @@ pub fn create_right_row(config: &Options, bar_bg: Color) -> Row {
     if !branch.is_empty() {
         row = row.text(
             format!("{} {}", GIT_BRANCH_ICON, branch),
-            Style::new().bg(block_bg),
+            Style::new().bg(block_bg).fg(theme::TEXT_FG),
         );
     }
 
@@ -104,7 +104,7 @@ fn path_block(pane_path: &str) -> Block {
             .and_then(|n| n.to_str())
     };
     match filename {
-        Some(name) => Block::new().span(name.to_string(), Style::new()),
+        Some(name) => Block::new().span(name.to_string(), Style::new().fg(theme::TEXT_FG)),
         None => Block::new()
             .span(UNKNOWN_PATH_ICON.to_string(), Style::new().fg(theme::ERROR)),
     }
